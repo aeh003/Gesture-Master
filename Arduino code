@@ -1,0 +1,455 @@
+#include <Wire.h> 
+
+#include <Adafruit_Sensor.h> 
+
+#include <Adafruit_BNO055.h> 
+
+#include <utility/imumaths.h> 
+
+ 
+
+// Initialize the sensor 
+
+Adafruit_BNO055 bno = Adafruit_BNO055(55);  // Adafruit sensor variable 
+
+imu::Vector<3> v;                           // Vector variable 
+
+ 
+
+// Orientation Constants 
+
+double TOP_FORWARD = 1.0; 
+
+double TOP_RIGHT = 1.2; 
+
+double TOP_LEFT = 1.1; 
+
+double BOTTOM_BACKWARD = 2.0; 
+
+double BOTTOM_LEFT = 2.1; 
+
+double BOTTOM_RIGHT = 2.2; 
+
+double UP = 5.0; 
+
+double DOWN = 6.0; 
+
+double LEFT = 4.0;  
+
+double RIGHT = 3.0; 
+
+ 
+
+bool closeTo(double tol, double val, double pt) {  //tol = range 
+
+                                                   //val = actual value input 
+
+                                                   //pt = target value 
+
+  if (tol >= abs(val - pt)) { 
+
+    return true; 
+
+  } 
+
+  return false; 
+
+} 
+
+ 
+
+// Boolean orientation methods 
+
+/*bool up(double x) { 
+
+  if(x < 360 && x > 240) { 
+
+    return true; 
+
+  } else if(x < 20) { 
+
+    return true; 
+
+  } else { 
+
+    return false; 
+
+  } 
+
+} 
+
+ 
+
+bool down(double x) { 
+
+  if(x < 360 && x > 240) { 
+
+    return false; 
+
+  } else if(x < 20) { 
+
+    return false; 
+
+  } else { 
+
+    return true; 
+
+  } 
+
+} 
+
+ 
+
+bool left(double z) { 
+
+  if(z > -110  && z < -80){  
+
+    return true; 
+
+  } else { 
+
+    return false; 
+
+  } 
+
+} 
+
+ 
+
+bool right(double z) { 
+
+  if(z > 60 && z < 110) { 
+
+    return true; 
+
+  } else { 
+
+    return false; 
+
+  } 
+
+} 
+
+ 
+
+bool top(double y) { 
+
+  if(y > 40 && y < 90) { 
+
+    return true; 
+
+  } else { 
+
+    return false; 
+
+  } 
+
+} 
+
+ 
+
+bool bottom(double y) { 
+
+  if(y < -40 && y > -90) { 
+
+    return true; 
+
+  } else { 
+
+    return false; 
+
+  } 
+
+}*/ 
+
+ 
+
+ 
+
+ 
+
+void setup(void) { 
+
+  Serial.begin(9600); 
+
+  Serial.println("Orientation Sensor Test"); 
+
+  Serial.println(""); 
+
+ 
+
+  /* Initialise the sensor */ 
+
+  if (!bno.begin()) { 
+
+    /* There was a problem detecting the BNO055 ... check your connections */ 
+
+    Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!"); 
+
+    while (1) 
+
+      ; 
+
+  } 
+
+ 
+
+  delay(200); 
+
+ 
+
+  bno.setExtCrystalUse(true); 
+
+} 
+
+ 
+
+int counter = 0; 
+
+double prev = 0.0; 
+
+double curr = 0.0; 
+
+ 
+
+ 
+
+void loop(void) { 
+
+  /* Get a new sensor event */ 
+
+  sensors_event_t event; 
+
+  bno.getEvent(&event); 
+
+ 
+
+  v = bno.getVector(Adafruit_BNO055::VECTOR_LINEARACCEL); 
+
+  double x_coord = event.orientation.x; 
+
+  double y_coord = event.orientation.y; 
+
+  double z_coord = event.orientation.z; 
+
+ 
+
+  //Serial.println("End - Start: " + end - start); 
+
+ 
+
+  // if (end - start == 5.0) { 
+
+  //   Serial.println("STOP!"); 
+
+  // } 
+
+  // Display the floating point data 
+
+  /*Serial.print("X: "); 
+
+  Serial.print(x_coord, 4); 
+
+  Serial.print("\tY: "); 
+
+  Serial.print(y_coord, 4); 
+
+  Serial.print("\tZ: "); 
+
+  Serial.print(z_coord, 4); 
+
+  Serial.println("");*/ 
+
+ 
+
+  // Test up() 
+
+  orientation(x_coord, y_coord, z_coord); 
+
+  curr = orientation(x_coord, y_coord, z_coord); 
+
+  // Checking if top forward -> STOP 
+
+  if(prev == curr && curr == TOP_FORWARD){ 
+
+    counter++; 
+
+  } 
+
+ 
+
+  
+
+  if(counter == 10) { 
+
+    Serial.println("STOP"); 
+
+    counter = 0; 
+
+    delay(85); 
+
+    exit(0); 
+
+  } 
+
+ 
+
+ 
+
+  // Accelerometer.............................................................................................................................................................. 
+
+  double x_mag = v.x(); 
+
+  double y_mag = v.y(); 
+
+  double z_mag = v.z(); 
+
+ 
+
+  float vMag = sqrt(pow(x_mag, 2) + pow(y_mag, 2) + pow(z_mag, 2)); 
+
+ 
+
+  /*Serial.print(" "); 
+
+  Serial.print(x_mag); 
+
+  Serial.print(" "); 
+
+  Serial.print(y_mag); 
+
+  Serial.print(" "); 
+
+  Serial.print(z_mag); 
+
+  Serial.print("\n");*/ 
+
+  //Serial.print("\t "); 
+
+  //Serial.println(vMag); 
+
+ 
+
+ 
+
+  // Temperature 
+
+  /*int8_t temp = bno.getTemp(); // Temperature variable 
+
+  Serial.print("Current Temperature: "); 
+
+  Serial.print(temp); 
+
+  Serial.println(" C");*/ 
+
+ 
+
+  prev = curr; 
+
+  delay(200); 
+
+} 
+
+ 
+
+double orientation(double x, double y, double z) { 
+
+  if (y > 40 && y < 90) {  //Top (forward, left, right) 
+
+ 
+
+    // Nested if for left and right 
+
+    if (x > 150 && x < 230) { 
+
+      Serial.println("Top Left"); 
+
+      return TOP_LEFT; 
+
+    } else if ((x > 0 && x < 10) || (x < 360 && x > 300)) { 
+
+      Serial.println("Top Right"); 
+
+      return TOP_RIGHT; 
+
+    } else { 
+
+      Serial.println("Top Forward"); 
+
+      //counter++; 
+
+      return TOP_FORWARD; 
+
+    }  // Could include Top Backwards 
+
+  } 
+
+ 
+
+  else if (y < -40 && y > -90) {  //Bottom(backward, left, right) 
+
+    if ((x > 0 && x < 10) || (x < 360 && x > 300)) { 
+
+      Serial.println("Bottom Left"); 
+
+      return BOTTOM_LEFT; 
+
+    } else if (x > 150 && x < 230) { 
+
+      Serial.println("Bottom Right"); 
+
+      return BOTTOM_RIGHT; 
+
+    } else { 
+
+      Serial.println("Bottom Backward"); 
+
+      return BOTTOM_BACKWARD; 
+
+    }  // Could include Bottom Forwards 
+
+  } 
+
+ 
+
+  else if (z > 60 && z < 110) {  // Right 
+
+    Serial.println("Right"); 
+
+    return RIGHT; 
+
+  } else if (z > -110 && z < -80) {  // Left 
+
+    Serial.println("Left"); 
+
+    return LEFT; 
+
+  } else if (x < 360 && x > 240) {  // Up 
+
+    Serial.println("Up"); 
+
+    return UP; 
+
+  } else if (x < 20) {  // Up 
+
+    Serial.println("Up"); 
+
+    return UP; 
+
+  } else if (x >= 360 || x <= 240) {  // Down 
+
+    Serial.println("Down"); 
+
+    return DOWN; 
+
+  } else if (x >= 20) {  // Down 
+
+    Serial.println("Down"); 
+
+    return DOWN; 
+
+  } 
+
+} 
+
+ 
